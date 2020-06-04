@@ -1,4 +1,31 @@
+/********************* 
+STEP A
+1. Create modules
+2. Set up event listeners
+  a. To call a function(ctrlAddItem) with each event
+3. ctrlAddItem will perform the following:
+  a. Get items from input fields
+  b. Create budget data structure(not a fxn of ctrlAddItem)
+  c. Add items to budget data structure
+    i.  Create new objects for each item(using fxn constructors)
+    ii. Store items in inc/exp array
+  d. Add items to UI list
+    i.   Add items
+    ii.  Clear fields
+    iii. Set focus back to description field
+  e. Calculate budget
+  f. Display budget on UI
+*********************/
+/*
+
+
+****************************************************************************
+****************************************************************************/
+/*BUDGET MODULE*/
+
 let budgetController = (function () {
+  //////////////////////////////////////
+  /*Function constructors*/
   let Expenses = function (id, description, value) {
     this.id = id;
     this.description = description;
@@ -11,219 +38,186 @@ let budgetController = (function () {
     this.value = value;
   };
 
-  let calculateTotal = function (type) {
-    let sum = 0;
-    data.allItems[type].forEach((item) => (sum = sum + item.value));
-
-    data.totals[type] = sum;
-  };
-
+  //////////////////////////////////////
+  /*Data structure*/
   let data = {
     allItems: {
       exp: [],
       inc: [],
     },
-
     totals: {
       exp: 0,
       inc: 0,
     },
-
-    budget: 0,
-
-    percentage: -1,
   };
 
+  //////////////////////////////////////
+  /*Public methods*/
   return {
     addItem: function (type, des, val) {
       let newItem, ID;
 
-      //Create new ID
+      //Set id based on array's last element's id
       if (data.allItems[type].length > 0) {
         ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
       } else {
         ID = 0;
       }
-      //Create new item
+
+      //Create new items based on type(inc/exp)
       if (type === 'exp') {
         newItem = new Expenses(ID, des, val);
       } else if (type === 'inc') {
         newItem = new Income(ID, des, val);
       }
 
-      //Push new item into data structure
+      //Add to data structure
       data.allItems[type].push(newItem);
 
-      //Return new item
+      //Return newItem
       return newItem;
     },
 
-    calculateBudget: function () {
-      //calculate total income and expenses
-      calculateTotal('exp');
-      calculateTotal('inc');
-
-      //calculate budget: income - expenses
-      data.budget = data.totals.inc - data.totals.exp;
-
-      //calculate the percentage of income spent
-      if (data.totals.inc > 0) {
-        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
-      } else {
-        data.percentage = -1;
-      }
-    },
-
-    getBudget: function () {
-      return {
-        budget: data.budget,
-        totalInc: data.totals.inc,
-        totalExp: data.totals.exp,
-        percentage: data.percentage,
-      };
-    },
-
     testing: function () {
-      console.log(data.allItems);
-      console.log(data.totals);
+      console.log(data);
     },
   };
 })();
+/*
 
-let UIController = (function () {
-  let DOMstrings = {
+
+****************************************************************************
+****************************************************************************/
+/*USER INTERFACE MODULE*/
+
+let uiController = (function () {
+  /*Private variables and functions*/
+  let DOMStrings = {
     inputType: '.add__type',
     inputDescription: '.add__description',
     inputValue: '.add__value',
     inputBtn: '.add__btn',
     incomeContainer: '.income__list',
     expensesContainer: '.expenses__list',
-    budgetLabel: '.budget__value',
-    incomeLabel: '.budget__income--value',
-    expenseLabel: '.budget__expenses--value',
-    percentageLabel: '.budget__expenses--percentage',
   };
 
+  //////////////////////////////////////
+  /* Public methods*/
   return {
+    getDOMStrings: function () {
+      return DOMStrings;
+    },
+
     getInput: function () {
+      let type, description, value;
       return {
-        type: document.querySelector(DOMstrings.inputType).value,
-        description: document.querySelector(DOMstrings.inputDescription).value,
-        value: parseFloat(document.querySelector(DOMstrings.inputValue).value),
+        type: document.querySelector(DOMStrings.inputType).value, //value will be inc/exp
+        description: document.querySelector(DOMStrings.inputDescription).value,
+        value: parseFloat(document.querySelector(DOMStrings.inputValue).value),
       };
     },
+
     addListItem: function (obj, type) {
       let html, newHtml, element;
-      // Create HTML string with placeholder text
-
+      //Create html string with placeholder text
       if (type === 'exp') {
-        element = DOMstrings.expensesContainer;
+        element = document.querySelector(DOMStrings.expensesContainer);
         html =
-          '<div class = "item clearfix" id = "expense-%id%"><div class = "item__description">%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__percentage">21%</div><div class = "item__delete"><button class = "item__delete--btn" ><i class = "ion-ios-close-outline"></i></button></div></div></div>';
+          '<div class="item clearfix" id="expense-%id%"><div class = "item__description">%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__percentage">21%</div><div class = "item__delete"><button class = "item__delete--btn"><i class = "ion-ios-close-outline"></i></button></div></div></div>';
       } else if (type === 'inc') {
-        element = DOMstrings.incomeContainer;
+        element = document.querySelector(DOMStrings.incomeContainer);
         html =
-          '<div class = "item clearfix" id = "income-%id%"><div class = "item__description">%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__delete"><button class = "item__delete--btn"><i class = "ion-ios-close-outline"></i></button></div></div></div>';
+          '<div class="item clearfix" id="income-%id%"><div class = "item__description" >%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__delete"><button class = "item__delete--btn" > < i class = "ion-ios-close-outline"></i></button ></div></div></div>';
       }
 
-      // Replace the placeholder text with some actual data
+      //Replace placeholder text with actual data
       newHtml = html.replace('%id%', obj.id);
       newHtml = newHtml.replace('%description%', obj.description);
       newHtml = newHtml.replace('%value%', obj.value);
 
-      // Insert the HTML into the DOM
-      document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
+      //Insert new html code to html file
+      element.insertAdjacentHTML('beforeend', newHtml);
     },
 
     clearFields: function () {
-      let fields, fieldArray;
-      fields = document.querySelectorAll(
-        DOMstrings.inputDescription + ', ' + DOMstrings.inputValue
+      let fields, fieldArr;
+
+      fields = document.querySelectorAll( //Returns a nodelist not an array
+        DOMStrings.inputDescription + ', ' + DOMStrings.inputValue
       );
-      fieldArray = Array.prototype.slice.call(fields);
 
-      // forEach method to iterate through the array
-      //with an anonymous fxn as argument
-      fieldArray.forEach((field) => (field.value = ''));
+      //Convert nodelist to an array
+      fieldArr = Array.prototype.slice.call(fields);
 
-      //Return focus to the description field
-      fieldArray[0].focus();
-    },
+      //Iterate through the array to clear each field
+      fieldArr.forEach(field => {
+        field.value = '';
+      });
 
-    displayBudget: function (obj) {
-      document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-      document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-      document.querySelector(DOMstrings.expenseLabel).textContent =
-        obj.totalExp;
-      if (obj.percentage > 0) {
-        document.querySelector(DOMstrings.percentageLabel).textContent =
-          obj.percentage + '%';
-      } else {
-        document.querySelector(DOMstrings.percentageLabel).textContent = '---';
-      }
-    },
+      //Set focus back to description
+      fieldArr[0].focus();
 
-    getDOMstrings: function () {
-      return DOMstrings;
     },
   };
-})();
 
-let appController = (function (budgetCtrl, UICtrl) {
-  let setupEventListeners = function () {
-    let DOM = UICtrl.getDOMstrings();
+  //////////////////////////////////////
+})();
+/*
+
+
+****************************************************************************
+****************************************************************************/
+/* OVERALL APP  MODULE TO CONTROL BUDGET AND USER MODULES*/
+
+let appController = (function (budgetCtrl, uiCtrl) {
+  //////////////////////////////////////
+  /*DOM Strings*/
+  let DOM = uiCtrl.getDOMStrings();
+
+  //////////////////////////////////////
+  /*Function expression to execute with each event*/
+  let ctrlAddItem = function () {
+    let input, newItem;
+
+    /*a. Get user input*/
+    input = uiCtrl.getInput();
+
+    if (input.description && input.value) { //Execute if description and value are true
+      /*b. Add input to data structure*/
+      newItem = budgetCtrl.addItem(input.type, input.description, input.value);
+
+      /*c. Add input to UI list*/
+      uiCtrl.addListItem(newItem, input.type);
+
+
+      /*d. Clear fields*/
+      uiCtrl.clearFields();
+    };
+
+  };
+
+  //////////////////////////////////////
+  /*Event listeners*/
+  let setUpEventListener = function () {
     document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
-    document.addEventListener('keypress', function (e) {
+    document.addEventListener('keypress', (e) => {
       if (e.keyCode === 13 || e.which === 13) {
         ctrlAddItem();
       }
     });
   };
 
-  let updateBudget = function () {
-    //1. Calculate the budget
-    budgetCtrl.calculateBudget();
-
-    //2. Return the budget
-    let budget = budgetCtrl.getBudget();
-
-    //3. Display the budget on the UI
-    UICtrl.displayBudget(budget);
-  };
-
-  let ctrlAddItem = function () {
-    let input, newItem;
-
-    //1. Get the field input data
-    input = UICtrl.getInput();
-
-    if (input.description !== '' && !isNaN(input.value) && input.value > 0) {
-      //2. Add the item to the budget controller
-      newItem = budgetCtrl.addItem(input.type, input.description, input.value);
-
-      //3. Add the item to UI
-      UICtrl.addListItem(newItem, input.type);
-
-      //4. Clear fields
-      UICtrl.clearFields();
-
-      //5. Calculate and Update budget
-      updateBudget();
-    }
-  };
-
+  //////////////////////////////////////
+  /*Public Methods*/
   return {
     init: function () {
-      console.log("I'm up");
-      setupEventListeners();
-      UICtrl.displayBudget({
-        budget: 0,
-        totalInc: 0,
-        totalExp: 0,
-        percentage: 0,
-      });
+      console.log('App is up and running');
+      setUpEventListener();
+    },
+    testing: function () {
+      console.log(newItem);
     },
   };
-})(budgetController, UIController);
+})(budgetController, uiController);
 
 appController.init();
