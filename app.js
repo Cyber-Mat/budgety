@@ -17,6 +17,18 @@ STEP A
   f. Display budget on UI
     i.  Clear field on page load
     ii. Display budget on user input
+
+STEP B
+1. Set up event listener(using event delegation)
+  a. Add event listener to common parent element
+  b. To call a function (ctrlDeleteItem) with each event
+2. ctrlDeleteItem will perform the following:
+  a. Identify and select event target
+  b. Traverse the DOM to the parent element of item
+  c. Delete item from data structure
+  d. Delete item from UI list
+  e. Recalculate budget
+  f. Update budget on UI
 *********************/
 /*
 
@@ -98,6 +110,21 @@ let budgetController = (function () {
       return newItem;
     },
 
+    deleteItem: function (type, id) {
+      let idArr, index;
+
+      //Create a new array with all IDs
+      idArr = data.allItems[type].map(item => item.id);
+
+      //Find the index of specific id to be deleted
+      index = idArr.indexOf(id);
+
+      //Delete the index from the id array if index of id is found
+      if (index >= 0) {
+        data.allItems[type].splice(index, 1);
+      }
+    },
+
     calculateBudget: function () {
       let budget, percentage;
 
@@ -152,6 +179,7 @@ let uiController = (function () {
     incomeLabel: '.budget__income--value',
     expensesLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
+    itemContainer: '.container'
   };
 
   //////////////////////////////////////
@@ -176,11 +204,11 @@ let uiController = (function () {
       if (type === 'exp') {
         element = document.querySelector(DOMStrings.expensesContainer);
         html =
-          '<div class="item clearfix" id="expense-%id%"><div class = "item__description">%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__percentage">21%</div><div class = "item__delete"><button class = "item__delete--btn"><i class = "ion-ios-close-outline"></i></button></div></div></div>';
+          '<div class="item clearfix" id="exp-%id%"><div class = "item__description">%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__percentage">21%</div><div class = "item__delete"><button class = "item__delete--btn"><i class = "ion-ios-close-outline"></i></button></div></div></div>';
       } else if (type === 'inc') {
         element = document.querySelector(DOMStrings.incomeContainer);
         html =
-          '<div class="item clearfix" id="income-%id%"><div class = "item__description" >%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__delete"><button class = "item__delete--btn" > < i class = "ion-ios-close-outline"></i></button ></div></div></div>';
+          '<div class="item clearfix" id="inc-%id%"><div class = "item__description" >%description%</div><div class = "right clearfix"><div class = "item__value">%value%</div><div class = "item__delete"><button class = "item__delete--btn"><i class = "ion-ios-close-outline"></i></button ></div></div></div>';
       }
 
       //Replace placeholder text with actual data
@@ -190,6 +218,15 @@ let uiController = (function () {
 
       //Insert new html code to html file
       element.insertAdjacentHTML('beforeend', newHtml);
+    },
+
+    deleteListItem: function (selectorID) {
+      //Select element based on id
+      let el = document.getElementById(selectorID);
+
+      //Traverse DOM to parent and delete element as a child
+      el.parentNode.removeChild(el);
+
     },
 
     clearFields: function () {
@@ -263,8 +300,7 @@ let appController = (function (budgetCtrl, uiCtrl) {
     /*a. Get user input*/
     input = uiCtrl.getInput();
 
-    if (input.description && input.value) {
-      //Execute if description and value are true
+    if (input.description && input.value) { //Execute if description and value are true
       /*b. Add input to data structure*/
       newItem = budgetCtrl.addItem(input.type, input.description, input.value);
 
@@ -279,6 +315,34 @@ let appController = (function (budgetCtrl, uiCtrl) {
     }
   };
 
+  let ctrlDeleteItem = function (e) {
+    let itemID, splitID, type, ID;
+
+    /*a. Select target element and traverse DOM*/
+
+    //Get unique ID of item(inc-0/exp-0)
+    itemID = (e.target.parentNode.parentNode.parentNode.parentNode.id);
+
+    if (itemID) { //Split ID into composition parts(returns and array)
+      splitID = itemID.split('-');
+
+      //Store each part in a separate variable
+      type = splitID[0];
+      ID = parseInt(splitID[1]);
+    };
+
+    /*b. Delete item from data structure*/
+    budgetCtrl.deleteItem(type, ID);
+
+    /*c. Delete item from UI list*/
+    uiCtrl.deleteListItem(itemID);
+
+    /*d. Update budget*/
+    updateBudget();
+
+
+  };
+
   //////////////////////////////////////
   /*Event listeners*/
   let setUpEventListener = function () {
@@ -288,6 +352,8 @@ let appController = (function (budgetCtrl, uiCtrl) {
         ctrlAddItem();
       }
     });
+
+    document.querySelector(DOM.itemContainer).addEventListener('click', ctrlDeleteItem);
   };
 
   //////////////////////////////////////
