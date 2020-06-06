@@ -40,6 +40,8 @@ STEP D
 1. Format number
 2. Display formatted number
 3. Display month and year
+4. Improve user experience(UX)
+  a. Change color of fields based on input type
 *********************/
 /*
 
@@ -249,6 +251,13 @@ let uiController = (function () {
     return (type === 'exp' ? '-' : '+') + int + '.' + dec;
   };
 
+  //Create a forEach method for the nodeList
+  let nodeListForEach = function (list, callback) {
+    for (let i = 0; i < list.length; i++) {
+      callback(list[i], i);
+    }
+  };
+
   //////////////////////////////////////
   /* Public methods*/
   return {
@@ -344,13 +353,6 @@ let uiController = (function () {
       //Select the percentage element of all exp items
       let fields = document.querySelectorAll(DOMStrings.expensesPercLabel);
 
-      //Create a forEach method for the nodeList
-      let nodeListForEach = function (list, callback) {
-        for (let i = 0; i < fields.length; i++) {
-          callback(list[i], i);
-        }
-      };
-
       //Call the forEach method
       nodeListForEach(fields, function (current, index) {
         if (percentages[index] > 0) {
@@ -389,6 +391,26 @@ let uiController = (function () {
       //Update date label with current date
       document.querySelector(DOMStrings.dateLabel).textContent =
         months[month] + ' ' + year;
+    },
+
+    changeType: function () { //To improve UX
+
+      //Select type,description and value fields
+      let fields = document.querySelectorAll(
+        DOMStrings.inputType +
+        ', ' +
+        DOMStrings.inputDescription +
+        ', ' +
+        DOMStrings.inputValue
+      );
+
+      //Iterate through the list and toggle class with each change in type
+      nodeListForEach(fields, function (field) {
+        field.classList.toggle('red-focus');
+      });
+
+      //Toggle class for add button
+      document.querySelector(DOMStrings.inputBtn).classList.toggle('red');
     },
   };
 
@@ -499,11 +521,10 @@ let appController = (function (budgetCtrl, uiCtrl) {
         ctrlAddItem();
       }
     });
-
-    document
-      .querySelector(DOM.itemContainer)
-      .addEventListener('click', ctrlDeleteItem);
+    document.querySelector(DOM.itemContainer).addEventListener('click', ctrlDeleteItem);
+    document.querySelector(DOM.inputType).addEventListener('change', uiCtrl.changeType);
   };
+
 
   //////////////////////////////////////
   /*Public Methods*/
