@@ -1,3 +1,3 @@
 # budgety
 
-Another JS app project with Jonas' complete JS course
+Another JS app project with Jonas Schmedtmann's complete JS course
